@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+<<<<<<< HEAD
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -28,4 +29,11 @@
     <PackageReference Include="ClosedXML" Version="0.102.1" />
   </ItemGroup>
 
+=======
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+>>>>>>> c59130f9432eb05463b3eb2bc58576a9cf7e1dc7
 </Project>
