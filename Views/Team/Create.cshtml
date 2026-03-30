@@ -1,0 +1,38 @@
+﻿@model TeamPerformancePredictor.Models.Team
+@{
+    ViewData["Title"] = "Create Team";
+}
+
+<div style="max-width:500px; margin:0 auto;">
+    <div class="stat-card" style="padding:32px;">
+        <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:24px;">
+            <i class="fa fa-users me-2"></i>Create New Team
+        </div>
+
+        <form method="post" action="/Team/Create">
+            @Html.AntiForgeryToken()
+            <div style="margin-bottom:20px;">
+                <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:8px;">
+                    Team Name
+                </label>
+                <input name="TeamName" type="text" class="tpp-form-control"
+                       placeholder="e.g. Engineering, Marketing..."
+                       required style="width:100%;" />
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:8px;">
+                    Description (optional)
+                </label>
+                <input name="Description" type="text" class="tpp-form-control"
+                       placeholder="Brief description..."
+                       style="width:100%;" />
+            </div>
+            <button type="submit" class="btn-tpp-primary" style="width:100%;">
+                <i class="fa fa-plus me-2"></i>Create Team
+            </button>
+            <a href="/Team/Index" style="display:block; text-align:center; margin-top:12px; font-size:13px; color:var(--muted);">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>

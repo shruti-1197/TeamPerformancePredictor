@@ -1,0 +1,183 @@
+@model TeamPerformancePredictor.Models.ActivityLog
+@{
+    ViewData["Title"] = "Log Weekly Activity";
+}
+
+<div style="max-width:760px;">
+    <div style="margin-bottom:20px;">
+        <a href="/ActivityLog/Index" style="font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;">
+            <i class="fa fa-arrow-left me-1"></i> Back to Activity Logs
+        </a>
+    </div>
+
+    <!-- ML Explainer Banner -->
+    <div style="background:linear-gradient(135deg,rgba(0,201,167,.12),rgba(0,85,255,.08));border:1px solid rgba(0,201,167,.25);border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;gap:16px;align-items:flex-start;">
+        <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#00C9A7,#0055FF);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;">
+            <i class="fa fa-robot"></i>
+        </div>
+        <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px;">How ML Uses This Data</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+                Each field you enter below becomes a <strong style="color:var(--text);">feature vector</strong> fed into our
+                <strong style="color:var(--text);">ML.NET FastTree Regression</strong> model (productivity score)
+                and <strong style="color:var(--text);">SDCA Multi-class Classifier</strong> (burnout risk).
+                The system averages the last 4 weeks of data per employee before running inference.
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div style="margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text);">Log Weekly Activity</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">Record one employee's work activity for a specific week</div>
+        </div>
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <!-- Employee + Week Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-7">
+                    <label class="tpp-form-label">Employee *</label>
+                    <select asp-for="EmployeeId" asp-items="ViewBag.Employees"
+                            class="tpp-form-control" required id="empSelect">
+                        <option value="">-- Select Employee --</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="tpp-form-label">Week Start Date *</label>
+                    <input asp-for="WeekStartDate" type="date" class="tpp-form-control" required />
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px;">Use the Monday of the week</div>
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border);margin-bottom:24px;"></div>
+
+            <!-- ML Features Section -->
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">
+                <i class="fa fa-microchip me-2" style="color:#00C9A7;"></i>ML Feature Inputs
+            </div>
+
+            <div class="row g-3">
+
+                <!-- Feature 1: Hours -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Hours Worked
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#0055FF;">Feature 1</span>
+                    </label>
+                    <div style="position:relative;">
+                        <input asp-for="HoursWorked" type="number" step="0.5" min="0" max="168"
+                               class="tpp-form-control" placeholder="e.g. 40" required
+                               oninput="updateHint(this,'hoursHint',40,168)" />
+                        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);">hrs</span>
+                    </div>
+                    <div id="hoursHint" style="font-size:11px;margin-top:4px;color:var(--muted);">Ideal: 35–44 hrs/week</div>
+                </div>
+
+                <!-- Feature 2: Tasks -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Tasks Completed
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#0055FF;">Feature 2</span>
+                    </label>
+                    <input asp-for="TasksCompleted" type="number" min="0" max="100"
+                           class="tpp-form-control" placeholder="e.g. 10" required />
+                    <div style="font-size:11px;margin-top:4px;color:var(--muted);">High = 12+ per week</div>
+                </div>
+
+                <!-- Feature 3: Meetings -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Meetings Attended
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#0055FF;">Feature 3</span>
+                    </label>
+                    <input asp-for="MeetingsAttended" type="number" min="0" max="50"
+                           class="tpp-form-control" placeholder="e.g. 5" required />
+                    <div style="font-size:11px;margin-top:4px;color:var(--muted);">Ideal: 4–6 per week</div>
+                </div>
+
+                <!-- Feature 4: Overtime -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Overtime Hours
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#FF5C6C;">Burnout F1</span>
+                    </label>
+                    <div style="position:relative;">
+                        <input asp-for="OvertimeHours" type="number" step="0.5" min="0" max="80"
+                               class="tpp-form-control" placeholder="e.g. 4" required
+                               id="overtimeInput" oninput="checkOvertime(this)" />
+                        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);">hrs</span>
+                    </div>
+                    <div id="overtimeWarn" style="font-size:11px;margin-top:4px;color:var(--muted);">⚠️ High risk if &gt;15 hrs/week</div>
+                </div>
+
+                <!-- Feature 5: Leave -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Leave Days Taken
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#FF5C6C;">Burnout F2</span>
+                    </label>
+                    <input asp-for="LeaveDaysTaken" type="number" min="0" max="7"
+                           class="tpp-form-control" placeholder="0–7" required />
+                    <div style="font-size:11px;margin-top:4px;color:var(--muted);">Days absent this week</div>
+                </div>
+
+                <!-- Feature 6: Deadlines Missed -->
+                <div class="col-md-4">
+                    <label class="tpp-form-label">
+                        Deadlines Missed
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#FF5C6C;">Burnout F3</span>
+                    </label>
+                    <input asp-for="DeadlinesMissed" type="number" min="0" max="20"
+                           class="tpp-form-control" placeholder="0" required />
+                    <div style="font-size:11px;margin-top:4px;color:var(--muted);">Number of missed deadlines</div>
+                </div>
+
+                <!-- Feature 7: Peer Score -->
+                <div class="col-md-12">
+                    <label class="tpp-form-label">
+                        Peer Collaboration Score
+                        <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:#0055FF;">Feature 7</span>
+                    </label>
+                    <div style="display:flex;gap:12px;align-items:center;margin-top:6px;" id="starRating">
+                        @for (int s = 1; s <= 5; s++)
+                        {
+                            <label style="cursor:pointer;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text);">
+                                <input type="radio" name="PeerCollaborationScore" value="@s"
+                                       @(s == 3 ? "checked" : "")
+                                       style="accent-color:#FFB547;width:16px;height:16px;" />
+                                @s star@(s > 1 ? "s" : "")
+                                <i class="fa fa-star" style="color:#FFB547;font-size:14px;"></i>
+                            </label>
+                        }
+                    </div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:6px;">1 = Poor collaboration · 5 = Excellent teamwork</div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div style="border-top:1px solid var(--border);margin:28px 0 0;padding-top:20px;display:flex;gap:10px;">
+                <button type="submit" class="btn-tpp-primary">
+                    <i class="fa fa-robot me-2"></i> Save & Run ML Prediction
+                </button>
+                <a href="/ActivityLog/Index" class="btn-tpp-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function checkOvertime(el) {
+        const warn = document.getElementById('overtimeWarn');
+        if (parseFloat(el.value) >= 15) {
+            warn.style.color = '#FF5C6C';
+            warn.textContent = '🚨 High burnout risk signal — will affect ML classification';
+        } else {
+            warn.style.color = 'var(--muted)';
+            warn.textContent = '⚠️ High risk if >15 hrs/week';
+        }
+    }
+</script>
+}

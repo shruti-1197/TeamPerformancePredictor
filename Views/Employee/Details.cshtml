@@ -1,0 +1,294 @@
+@model Employee
+@{
+    ViewData["Title"] = Model.Name + " — Details";
+    var pred   = ViewBag.CurrentPrediction as TeamPerformancePredictor.Models.PredictionResult;
+    var logs   = ViewBag.ActivityLogs as List<TeamPerformancePredictor.Models.ActivityLog>;
+    var riskClass = pred?.BurnoutRiskLevel switch {
+        "High"   => "risk-high",
+        "Medium" => "risk-medium",
+        _        => "risk-low"
+    };
+    var scoreColor = (pred?.ProductivityScore ?? 0) >= 70 ? "#00C9A7" :
+                     (pred?.ProductivityScore ?? 0) >= 45 ? "#0055FF" : "#FF5C6C";
+}
+
+<!-- Back link -->
+<div style="margin-bottom:20px;">
+    <a href="/Employee/Index" style="font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;">
+        <i class="fa fa-arrow-left me-1"></i> Back to Employees
+    </a>
+</div>
+
+<!-- Profile Header -->
+<div class="chart-card mb-4" style="padding:28px 32px;">
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+
+        <!-- Avatar -->
+        <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#00C9A7,#0055FF);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:#fff;flex-shrink:0;">
+            @Model.Name[0]
+        </div>
+
+        <!-- Info -->
+        <div style="flex:1;">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);margin-bottom:4px;">@Model.Name</div>
+            <div style="color:var(--muted);font-size:14px;margin-bottom:10px;">@Model.Designation &nbsp;·&nbsp; @Model.Team?.TeamName &nbsp;·&nbsp; @Model.Department</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:12px;background:#F4F7FE;padding:4px 10px;border-radius:6px;color:var(--muted);">
+                    <i class="fa fa-envelope me-1"></i>@Model.Email
+                </span>
+                <span style="font-size:12px;background:#F4F7FE;padding:4px 10px;border-radius:6px;color:var(--muted);">
+                    <i class="fa fa-calendar me-1"></i>Joined @Model.JoinDate.ToString("MMM yyyy")
+                </span>
+                <span style="font-size:12px;background:rgba(0,201,167,.1);padding:4px 10px;border-radius:6px;color:#00a589;font-weight:600;">
+                    <i class="fa fa-check-circle me-1"></i>Active
+                </span>
+            </div>
+        </div>
+
+        <!-- Current Prediction Summary -->
+        @if (pred != null)
+        {
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                <div style="text-align:center;padding:16px 20px;background:var(--surface);border-radius:12px;min-width:100px;">
+                    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:@scoreColor;">@pred.ProductivityScore</div>
+                    <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Score</div>
+                </div>
+                <div style="text-align:center;padding:16px 20px;background:var(--surface);border-radius:12px;min-width:100px;">
+                    <div style="margin-bottom:6px;"><span class="risk-badge @riskClass">@pred.BurnoutRiskLevel</span></div>
+                    <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Burnout Risk</div>
+                </div>
+                <div style="text-align:center;padding:16px 20px;background:var(--surface);border-radius:12px;min-width:100px;">
+                    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--text);">@Math.Round((pred.BurnoutProbability)*100,0)%</div>
+                    <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Burn. Prob.</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (pred != null && !string.IsNullOrEmpty(pred.Recommendation))
+    {
+        <div style="margin-top:20px;padding:14px 18px;background:var(--surface);border-radius:10px;border-left:4px solid @scoreColor;font-size:13px;color:var(--text);line-height:1.6;">
+            <strong style="display:block;margin-bottom:4px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">ML Recommendation</strong>
+            @pred.Recommendation
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);">
+            <i class="fa fa-microchip me-1"></i>Model: <strong>@pred.ModelUsed</strong>
+            &nbsp;·&nbsp; Generated: @pred.PredictionDate.ToString("dd MMM yyyy, HH:mm")
+        </div>
+    }
+</div>
+
+<!-- Trend Charts -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-6">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-chart-line me-2" style="color:#00C9A7;"></i>Productivity Score — Weekly Trend</div>
+            <canvas id="prodTrendChart" height="160"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-fire me-2" style="color:#FF5C6C;"></i>Burnout Probability — Weekly Trend</div>
+            <canvas id="burnTrendChart" height="160"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-6">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-clock me-2" style="color:#0055FF;"></i>Hours Worked vs Tasks Completed</div>
+            <canvas id="hoursTasksChart" height="160"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-moon me-2" style="color:#FFB547;"></i>Overtime Hours per Week</div>
+            <canvas id="overtimeChart" height="160"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Logs Table -->
+<div class="chart-card mb-4">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div class="card-title mb-0"><i class="fa fa-table me-2" style="color:#0055FF;"></i>Weekly Activity Log History</div>
+        <a href="/ActivityLog/Create?employeeId=@Model.Id" class="btn-tpp-primary" style="font-size:13px;padding:8px 18px;">
+            <i class="fa fa-plus me-1"></i> Add New Week
+        </a>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="tpp-table">
+            <thead>
+                <tr>
+                    <th>Week</th>
+                    <th>Hours</th>
+                    <th>Tasks</th>
+                    <th>Meetings</th>
+                    <th>Overtime</th>
+                    <th>Leave Days</th>
+                    <th>Deadlines Missed</th>
+                    <th>Peer Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (logs != null)
+                {
+                    foreach (var log in logs.OrderByDescending(l => l.WeekStartDate))
+                    {
+                        var isHighOT = log.OvertimeHours >= 15;
+                        <tr>
+                            <td style="font-weight:600;">@log.WeekStartDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span style="font-weight:600;color:@(log.HoursWorked > 50 ? "#FF5C6C" : "var(--text)");">
+                                    @log.HoursWorked h
+                                </span>
+                            </td>
+                            <td>@log.TasksCompleted</td>
+                            <td>@log.MeetingsAttended</td>
+                            <td>
+                                <span style="font-weight:700;color:@(isHighOT ? "#FF5C6C" : "var(--text)");">
+                                    @log.OvertimeHours h @(isHighOT ? "⚠️" : "")
+                                </span>
+                            </td>
+                            <td>
+                                <span style="color:@(log.LeaveDaysTaken > 2 ? "#d97706" : "var(--text)");">
+                                    @log.LeaveDaysTaken
+                                </span>
+                            </td>
+                            <td>
+                                <span style="color:@(log.DeadlinesMissed > 0 ? "#FF5C6C" : "#00C9A7");font-weight:600;">
+                                    @log.DeadlinesMissed
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    @for (int s = 1; s <= 5; s++)
+                                    {
+                                        <i class="fa fa-star" style="font-size:11px;color:@(s <= log.PeerCollaborationScore ? "#FFB547" : "#E9EDF7");"></i>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const trend = @Html.Raw(ViewBag.WeeklyTrend ?? "[]");
+    const weeks     = trend.map(t => t.week);
+    const prodScores= trend.map(t => t.productivity);
+    const burnProbs = trend.map(t => t.burnoutProb);
+    const hours     = trend.map(t => t.hours);
+    const tasks     = trend.map(t => t.tasks);
+
+    // Activity log raw data for overtime chart
+    const logData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        (logs ?? new List<TeamPerformancePredictor.Models.ActivityLog>())
+            .OrderBy(l => l.WeekStartDate)
+            .Select(l => new {
+                week = l.WeekStartDate.ToString("dd MMM"),
+                overtime = l.OvertimeHours
+            })
+    ));
+
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    const gridColor = '#E9EDF7';
+    const mutedColor = '#A3AED0';
+
+    // Productivity trend
+    new Chart(document.getElementById('prodTrendChart'), {
+        type: 'line',
+        data: {
+            labels: weeks,
+            datasets: [{
+                label: 'Productivity Score',
+                data: prodScores,
+                borderColor: '#00C9A7',
+                backgroundColor: 'rgba(0,201,167,.08)',
+                fill: true, tension: .4,
+                pointBackgroundColor: '#00C9A7',
+                pointRadius: 5, pointHoverRadius: 7,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, grid: { color: gridColor }, ticks: { color: mutedColor } },
+                x: { grid: { display: false }, ticks: { color: mutedColor } }
+            }
+        }
+    });
+
+    // Burnout probability trend
+    new Chart(document.getElementById('burnTrendChart'), {
+        type: 'line',
+        data: {
+            labels: weeks,
+            datasets: [{
+                label: 'Burnout Probability %',
+                data: burnProbs,
+                borderColor: '#FF5C6C',
+                backgroundColor: 'rgba(255,92,108,.07)',
+                fill: true, tension: .4,
+                pointBackgroundColor: '#FF5C6C',
+                pointRadius: 5, pointHoverRadius: 7,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, grid: { color: gridColor }, ticks: { color: mutedColor, callback: v => v + '%' } },
+                x: { grid: { display: false }, ticks: { color: mutedColor } }
+            }
+        }
+    });
+
+    // Hours vs Tasks
+    new Chart(document.getElementById('hoursTasksChart'), {
+        type: 'bar',
+        data: {
+            labels: weeks,
+            datasets: [
+                { label: 'Hours Worked', data: hours, backgroundColor: 'rgba(0,85,255,.65)', borderRadius: 6, borderSkipped: false },
+                { label: 'Tasks Completed', data: tasks, backgroundColor: 'rgba(0,201,167,.65)', borderRadius: 6, borderSkipped: false }
+            ]
+        },
+        options: {
+            plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } },
+            scales: {
+                y: { grid: { color: gridColor }, ticks: { color: mutedColor } },
+                x: { grid: { display: false }, ticks: { color: mutedColor } }
+            }
+        }
+    });
+
+    // Overtime chart
+    new Chart(document.getElementById('overtimeChart'), {
+        type: 'bar',
+        data: {
+            labels: logData.map(d => d.week),
+            datasets: [{
+                label: 'Overtime Hours',
+                data: logData.map(d => d.overtime),
+                backgroundColor: logData.map(d => d.overtime >= 15 ? 'rgba(255,92,108,.75)' : d.overtime >= 8 ? 'rgba(255,181,71,.75)' : 'rgba(0,201,167,.6)'),
+                borderRadius: 6, borderSkipped: false
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: gridColor }, ticks: { color: mutedColor } },
+                x: { grid: { display: false }, ticks: { color: mutedColor } }
+            }
+        }
+    });
+</script>
+}

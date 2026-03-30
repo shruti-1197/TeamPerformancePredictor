@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — TPP Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --navy:      #0B1437;
+            --navy-mid:  #112060;
+            --teal:      #00C9A7;
+            --teal-dim:  #00a589;
+            --amber:     #FFB547;
+            --danger:    #FF5C6C;
+            --surface:   #F4F7FE;
+            --card:      #FFFFFF;
+            --text:      #1B2559;
+            --muted:     #A3AED0;
+            --border:    #E9EDF7;
+            --sidebar-w: 260px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: var(--sidebar-w); height: 100vh;
+            background: var(--navy);
+            display: flex; flex-direction: column;
+            z-index: 100;
+            transition: transform .3s ease;
+        }
+
+        .sidebar-logo {
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .sidebar-logo .logo-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--teal), #0099ff);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 18px; color: #fff; margin-bottom: 10px;
+        }
+        .sidebar-logo .brand {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 14px;
+            color: #fff; line-height: 1.2;
+            letter-spacing: .5px;
+        }
+        .sidebar-logo .brand span { color: var(--teal); }
+        .sidebar-logo small { color: var(--muted); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+
+        .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+        .nav-section-label {
+            font-size: 10px; font-weight: 600; letter-spacing: 2px;
+            text-transform: uppercase; color: rgba(163,174,208,.5);
+            padding: 16px 12px 8px;
+        }
+
+        .nav-link-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 10px;
+            color: rgba(255,255,255,.55); font-size: 14px; font-weight: 500;
+            text-decoration: none; margin-bottom: 2px;
+            transition: all .2s ease;
+        }
+        .nav-link-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+        .nav-link-item.active {
+            background: linear-gradient(90deg, rgba(0,201,167,.18), rgba(0,201,167,.06));
+            color: var(--teal);
+            border-left: 3px solid var(--teal);
+        }
+        .nav-link-item .nav-icon { width: 20px; text-align: center; font-size: 15px; }
+        .nav-badge {
+            margin-left: auto; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 20px;
+            background: var(--danger); color: #fff;
+        }
+
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,.07);
+        }
+        .user-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 10px;
+            background: rgba(255,255,255,.05);
+        }
+        .user-avatar {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--teal), #0099ff);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 13px; color: #fff; flex-shrink: 0;
+        }
+        .user-name { font-size: 13px; font-weight: 600; color: #fff; }
+        .user-role { font-size: 11px; color: var(--muted); }
+        .logout-btn {
+            margin-left: auto;
+            color: var(--muted); font-size: 15px; text-decoration: none;
+            transition: color .2s;
+        }
+        .logout-btn:hover { color: var(--danger); }
+
+        /* ── Main Content ── */
+        .main-wrap {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 90;
+        }
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 20px; font-weight: 700; color: var(--text);
+        }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-badge {
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            background: rgba(0,201,167,.12); color: var(--teal-dim);
+        }
+
+        .content { padding: 28px 32px; flex: 1; }
+
+        /* ── Cards ── */
+        .stat-card {
+            background: var(--card); border-radius: 16px;
+            padding: 22px 24px; border: 1px solid var(--border);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(11,20,55,.08); }
+        .stat-card .stat-label { font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+        .stat-card .stat-value {
+            font-family: 'Syne', sans-serif; font-size: 34px; font-weight: 800;
+            color: var(--text); line-height: 1.1; margin: 6px 0 2px;
+        }
+        .stat-card .stat-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; float: right; margin-top: -44px;
+        }
+
+        .chart-card {
+            background: var(--card); border-radius: 16px;
+            border: 1px solid var(--border); padding: 24px;
+        }
+        .chart-card .card-title {
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 15px; color: var(--text); margin-bottom: 20px;
+        }
+
+        /* ── Table ── */
+        .tpp-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .tpp-table thead th {
+            font-size: 11px; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--muted);
+            padding: 10px 16px; border-bottom: 2px solid var(--border);
+        }
+        .tpp-table tbody tr {
+            transition: background .15s;
+        }
+        .tpp-table tbody tr:hover td { background: #f8faff; }
+        .tpp-table tbody td {
+            padding: 13px 16px; font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ── Badges ── */
+        .risk-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 700;
+        }
+        .risk-high   { background: rgba(255,92,108,.12); color: var(--danger); }
+        .risk-medium { background: rgba(255,181,71,.15);  color: #d97706; }
+        .risk-low    { background: rgba(0,201,167,.12);   color: var(--teal-dim); }
+
+        /* ── Score bar ── */
+        .score-bar { height: 6px; border-radius: 99px; background: var(--border); overflow: hidden; }
+        .score-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+
+        /* ── Alerts ── */
+        .tpp-alert {
+            padding: 12px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 500; margin-bottom: 16px;
+        }
+        .tpp-alert-success { background: rgba(0,201,167,.1); color: #007a64; border-left: 3px solid var(--teal); }
+        .tpp-alert-danger  { background: rgba(255,92,108,.1); color: #c0392b; border-left: 3px solid var(--danger); }
+
+        /* ── Forms ── */
+        .tpp-form-label { font-size: 12px; font-weight: 600; letter-spacing: .3px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .tpp-form-control {
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 10px 14px; font-size: 14px; color: var(--text);
+            width: 100%; outline: none; transition: border-color .2s;
+            background: #fff;
+        }
+        .tpp-form-control:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,201,167,.12); }
+
+        .btn-tpp-primary {
+            background: linear-gradient(135deg, var(--teal), #0099cc);
+            color: #fff; border: none; padding: 11px 24px;
+            border-radius: 10px; font-weight: 700; font-size: 14px;
+            cursor: pointer; transition: opacity .2s, transform .15s;
+        }
+        .btn-tpp-primary:hover { opacity: .9; transform: translateY(-1px); }
+        .btn-tpp-outline {
+            background: transparent; border: 1.5px solid var(--border);
+            color: var(--text); padding: 9px 20px; border-radius: 10px;
+            font-weight: 600; font-size: 14px; cursor: pointer;
+            text-decoration: none; display: inline-block;
+            transition: border-color .2s, background .2s;
+        }
+        .btn-tpp-outline:hover { border-color: var(--teal); color: var(--teal-dim); background: rgba(0,201,167,.04); }
+
+        /* ── Responsive ── */
+        @@media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-wrap { margin-left: 0; }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon"><i class="fa fa-chart-line"></i></div>
+        <div class="brand">Team<span>Perf</span> Predictor</div>
+        <small>ML-Powered HR Analytics</small>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Analytics</div>
+        <a href="/Dashboard/Index" class="nav-link-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+            <span class="nav-icon"><i class="fa fa-th-large"></i></span> Dashboard
+        </a>
+
+        <div class="nav-section-label">Management</div>
+        <a href="/Employee/Index" class="nav-link-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employee" ? "active" : "")">
+            <span class="nav-icon"><i class="fa fa-users"></i></span> Employees
+        </a>
+        <a href="/ActivityLog/Index" class="nav-link-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "ActivityLog" ? "active" : "")">
+            <span class="nav-icon"><i class="fa fa-clipboard-list"></i></span> Activity Logs
+        </a>
+        <a href="/Team/Index" class="nav-link-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Team" ? "active" : "")">
+    <span class="nav-icon"><i class="fa fa-layer-group"></i></span> Teams
+</a>
+
+        <div class="nav-section-label">Quick Actions</div>
+        <a href="/ActivityLog/Create" class="nav-link-item">
+            <span class="nav-icon"><i class="fa fa-plus-circle"></i></span> Log Activity
+        </a>
+        <a href="/Employee/Create" class="nav-link-item">
+            <span class="nav-icon"><i class="fa fa-user-plus"></i></span> Add Employee
+        </a>
+        <a href="/Export/Predictions" class="nav-link-item">
+            <span class="nav-icon"><i class="fa fa-file-excel"></i></span> Export to Excel
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-card">
+            <div class="user-avatar">@(((ViewBag.UserName as string) ?? "U").FirstOrDefault())</div>
+            <div>
+                <div class="user-name">@(ViewBag.UserName ?? "User")</div>
+                <div class="user-role">@(ViewBag.UserRole ?? "Staff")</div>
+            </div>
+            <a href="/Auth/Logout" class="logout-btn" title="Logout"><i class="fa fa-sign-out-alt"></i></a>
+        </div>
+    </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+    <div class="topbar">
+        <div class="page-title">@ViewData["Title"]</div>
+        <div class="topbar-right">
+            @* <span class="topbar-badge"><i class="fa fa-robot me-1"></i> ML.NET Active</span> *@
+            <span style="font-size:13px;color:var(--muted);">@DateTime.Now.ToString("ddd, dd MMM yyyy")</span>
+        </div>
+    </div>
+
+    <div class="content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="tpp-alert tpp-alert-success"><i class="fa fa-check-circle me-2"></i>@TempData["Success"]</div>
+        }
+        @RenderBody()
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

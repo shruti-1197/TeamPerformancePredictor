@@ -1,0 +1,267 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var employees   = ViewBag.Employees   as List<TeamPerformancePredictor.Models.Employee>;
+    var predictions = ViewBag.Predictions as List<TeamPerformancePredictor.Models.PredictionResult>;
+}
+
+<!-- ── KPI Cards ── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(0,201,167,.12); color:#00C9A7;">
+                <i class="fa fa-users"></i>
+            </div>
+            <div class="stat-label">Total Employees</div>
+            <div class="stat-value">@ViewBag.TotalEmployees</div>
+            <small style="color:var(--muted); font-size:12px;"><i class="fa fa-building me-1"></i>@ViewBag.TotalTeams teams</small>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(255,92,108,.1); color:var(--danger);">
+                <i class="fa fa-fire"></i>
+            </div>
+            <div class="stat-label">High Burnout Risk</div>
+            <div class="stat-value" style="color:var(--danger);">@ViewBag.HighRisk</div>
+            <small style="color:var(--muted); font-size:12px;"><i class="fa fa-exclamation-triangle me-1"></i>Needs immediate attention</small>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(255,181,71,.12); color:#d97706;">
+                <i class="fa fa-exclamation-circle"></i>
+            </div>
+            <div class="stat-label">Medium Risk</div>
+            <div class="stat-value" style="color:#d97706;">@ViewBag.MediumRisk</div>
+            <small style="color:var(--muted); font-size:12px;"><i class="fa fa-eye me-1"></i>Monitor closely</small>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:rgba(0,85,255,.1); color:#0055FF;">
+                <i class="fa fa-chart-line"></i>
+            </div>
+            <div class="stat-label">Avg Productivity</div>
+            <div class="stat-value" style="color:#0055FF;">@ViewBag.AvgProductivity<span style="font-size:18px;">/100</span></div>
+            <small style="color:var(--muted); font-size:12px;"><i class="fa fa-robot me-1"></i>ML.NET prediction</small>
+        </div>
+    </div>
+</div>
+
+<!-- ── Spotlight Row ── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card" style="display:flex;align-items:center;gap:16px;padding:18px 22px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,201,167,.12);display:flex;align-items:center;justify-content:center;color:#00C9A7;font-size:20px;flex-shrink:0;">
+                <i class="fa fa-trophy"></i>
+            </div>
+            <div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Top Performer</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--text);">@ViewBag.TopPerformer</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card" style="display:flex;align-items:center;gap:16px;padding:18px 22px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,92,108,.1);display:flex;align-items:center;justify-content:center;color:var(--danger);font-size:20px;flex-shrink:0;">
+                <i class="fa fa-bell"></i>
+            </div>
+            <div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Highest Burnout Risk</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:var(--text);">@ViewBag.MostAtRisk</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Charts Row ── -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-7">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-chart-bar me-2" style="color:#00C9A7;"></i>ML Productivity Scores — All Employees</div>
+            <canvas id="productivityChart" height="110"></canvas>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-chart-pie me-2" style="color:#FF5C6C;"></i>Burnout Risk Distribution</div>
+            <canvas id="burnoutChart" height="110"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="card-title"><i class="fa fa-wave-square me-2" style="color:#0055FF;"></i>Burnout Probability by Employee (%)</div>
+            <canvas id="burnoutProbChart" height="70"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ── Employee Predictions Table ── -->
+<div class="chart-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div class="card-title mb-0"><i class="fa fa-table me-2" style="color:#0055FF;"></i>Employee ML Predictions</div>
+        <a href="/ActivityLog/Create" class="btn-tpp-primary" style="font-size:13px;padding:8px 18px;">
+            <i class="fa fa-plus me-1"></i> Log Activity
+        </a>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="tpp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Team</th>
+                    <th>Productivity Score</th>
+                    <th>Burnout Risk</th>
+                    <th>Burnout Probability</th>
+                    <th>ML Model</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (employees != null && predictions != null)
+                {
+                    for (int i = 0; i < employees.Count; i++)
+                    {
+                        var emp  = employees[i];
+                        var pred = predictions[i];
+                        var riskClass = pred.BurnoutRiskLevel switch {
+                            "High"   => "risk-high",
+                            "Medium" => "risk-medium",
+                            _        => "risk-low"
+                        };
+                        var scoreColor = pred.ProductivityScore >= 70 ? "#00C9A7" :
+                                         pred.ProductivityScore >= 45 ? "#0055FF" : "#FF5C6C";
+                        <tr>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00C9A7,#0055FF);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">
+                                        @emp.Name[0]
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;font-size:14px;">@emp.Name</div>
+                                        <div style="font-size:12px;color:var(--muted);">@emp.Designation</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span style="font-size:13px;color:var(--muted);">@emp.Team?.TeamName</span></td>
+                            <td>
+                                <div style="min-width:130px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                                        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:@scoreColor;">@pred.ProductivityScore</span>
+                                        <span style="font-size:11px;color:var(--muted);">/100</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill" style="width:@pred.ProductivityScore%;background:@scoreColor;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="risk-badge @riskClass">
+                                    @if (pred.BurnoutRiskLevel == "High") { <text>🔴</text> }
+                                    else if (pred.BurnoutRiskLevel == "Medium") { <text>🟡</text> }
+                                    else { <text>🟢</text> }
+                                    @pred.BurnoutRiskLevel
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;">
+                                    @Math.Round(pred.BurnoutProbability * 100, 0)%
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-size:11px;background:#F4F7FE;padding:3px 8px;border-radius:6px;color:var(--muted);">
+                                    @pred.ModelUsed
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/Employee/Details/@emp.Id" style="font-size:13px;color:#0055FF;font-weight:600;text-decoration:none;">
+                                    View Details →
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels   = @Html.Raw(ViewBag.ChartLabels ?? "[]");
+    const scores   = @Html.Raw(ViewBag.ChartScores ?? "[]");
+    const burnProb = @Html.Raw(ViewBag.ChartBurnout ?? "[]");
+
+    const hi  = @ViewBag.HighRisk;
+    const med = @ViewBag.MediumRisk;
+    const lo  = @ViewBag.LowRisk;
+
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+    // Productivity bar chart
+    new Chart(document.getElementById('productivityChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Productivity Score',
+                data: scores,
+                backgroundColor: scores.map(s => s >= 70 ? 'rgba(0,201,167,.75)' : s >= 45 ? 'rgba(0,85,255,.65)' : 'rgba(255,92,108,.7)'),
+                borderRadius: 8, borderSkipped: false
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, grid: { color: '#E9EDF7' }, ticks: { color: '#A3AED0' } },
+                x: { grid: { display: false }, ticks: { color: '#A3AED0' } }
+            }
+        }
+    });
+
+    // Burnout doughnut
+    new Chart(document.getElementById('burnoutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+            datasets: [{
+                data: [lo, med, hi],
+                backgroundColor: ['#00C9A7', '#FFB547', '#FF5C6C'],
+                borderWidth: 0, hoverOffset: 8
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#A3AED0', boxWidth: 12, padding: 16 } }
+            }
+        }
+    });
+
+    // Burnout probability line
+    new Chart(document.getElementById('burnoutProbChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Burnout Probability %',
+                data: burnProb,
+                backgroundColor: burnProb.map(p => p >= 70 ? 'rgba(255,92,108,.75)' : p >= 40 ? 'rgba(255,181,71,.75)' : 'rgba(0,201,167,.6)'),
+                borderRadius: 6, borderSkipped: false
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, grid: { color: '#E9EDF7' }, ticks: { color: '#A3AED0', callback: v => v + '%' } },
+                x: { grid: { display: false }, ticks: { color: '#A3AED0' } }
+            }
+        }
+    });
+</script>
+}

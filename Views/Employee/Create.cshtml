@@ -1,0 +1,97 @@
+@model Employee
+@{
+    ViewData["Title"] = "Add Employee";
+}
+
+<div style="max-width:680px;">
+
+    <!-- Back -->
+    <div style="margin-bottom:20px;">
+        <a href="/Employee/Index" style="font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;">
+            <i class="fa fa-arrow-left me-1"></i> Back to Employees
+        </a>
+    </div>
+
+    <div class="chart-card">
+        <!-- Header -->
+        <div style="margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#00C9A7,#0055FF);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;margin-bottom:12px;">
+                <i class="fa fa-user-plus"></i>
+            </div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text);">Add New Employee</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">Fill in the details below. Activity logs can be added after creation.</div>
+        </div>
+
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3">
+                <!-- Full Name -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Full Name *</label>
+                    <input asp-for="Name" class="tpp-form-control" placeholder="e.g. Alice Johnson" required />
+                    <span asp-validation-for="Name" style="font-size:12px;color:var(--danger);"></span>
+                </div>
+
+                <!-- Email -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Work Email *</label>
+                    <input asp-for="Email" type="email" class="tpp-form-control" placeholder="alice@company.com" required />
+                    <span asp-validation-for="Email" style="font-size:12px;color:var(--danger);"></span>
+                </div>
+
+                <!-- Designation -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Designation *</label>
+                    <input asp-for="Designation" class="tpp-form-control" placeholder="e.g. Senior Developer" required />
+                </div>
+
+                <!-- Department -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Department *</label>
+                    <select asp-for="Department" class="tpp-form-control" required>
+                        <option value="">-- Select Department --</option>
+                        <option>Technology</option>
+                        <option>Business</option>
+                        <option>Strategy</option>
+                        <option>Operations</option>
+                        <option>Finance</option>
+                        <option>HR</option>
+                        <option>Marketing</option>
+                    </select>
+                </div>
+
+                <!-- Team -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Team *</label>
+                    <select asp-for="TeamId" asp-items="ViewBag.Teams" class="tpp-form-control" required>
+                        <option value="">-- Select Team --</option>
+                    </select>
+                </div>
+
+                <!-- Join Date -->
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Join Date</label>
+                    <input asp-for="JoinDate" type="date" class="tpp-form-control"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div style="border-top:1px solid var(--border);margin:24px 0;"></div>
+
+            <!-- Info box -->
+            <div style="background:#F4F7FE;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:flex-start;">
+                <i class="fa fa-info-circle" style="color:#0055FF;margin-top:2px;flex-shrink:0;"></i>
+                <span>After adding the employee, go to their profile and click <strong>Add New Week</strong> to start logging activity data. The ML model will generate predictions once at least one week of data is logged.</span>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn-tpp-primary">
+                    <i class="fa fa-check me-2"></i> Save Employee
+                </button>
+                <a href="/Employee/Index" class="btn-tpp-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

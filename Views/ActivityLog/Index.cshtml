@@ -1,0 +1,78 @@
+@model List<TeamPerformancePredictor.Models.ActivityLog>
+@{
+    ViewData["Title"] = "Activity Logs";
+}
+
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+        <div style="font-size:14px;color:var(--muted);">@Model.Count entries shown (latest 100)</div>
+    </div>
+    <a href="/ActivityLog/Create" class="btn-tpp-primary">
+        <i class="fa fa-plus me-2"></i> Log New Week
+    </a>
+</div>
+
+<!-- Table -->
+<div class="chart-card">
+    <div style="overflow-x:auto;">
+        <table class="tpp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Team</th>
+                    <th>Week of</th>
+                    <th>Hours</th>
+                    <th>Tasks</th>
+                    <th>Overtime</th>
+                    <th>Leave</th>
+                    <th>Deadlines Missed</th>
+                    <th>Peer Score</th>
+                    <th>Logged</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var log in Model)
+                {
+                    var highOT = log.OvertimeHours >= 15;
+                    <tr>
+                        <td>
+                            <a href="/Employee/Details/@log.EmployeeId"
+                               style="font-weight:600;color:var(--text);text-decoration:none;">
+                                @log.Employee?.Name
+                            </a>
+                        </td>
+                        <td style="color:var(--muted);font-size:13px;">@log.Employee?.Team?.TeamName</td>
+                        <td style="font-weight:600;">@log.WeekStartDate.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <span style="color:@(log.HoursWorked > 50 ? "#FF5C6C" : "var(--text)");font-weight:@(log.HoursWorked > 50 ? "700" : "400");">
+                                @log.HoursWorked h
+                            </span>
+                        </td>
+                        <td>@log.TasksCompleted</td>
+                        <td>
+                            <span style="color:@(highOT ? "#FF5C6C" : "var(--text)");font-weight:@(highOT ? "700" : "400");">
+                                @log.OvertimeHours h @(highOT ? "⚠️" : "")
+                            </span>
+                        </td>
+                        <td>@log.LeaveDaysTaken</td>
+                        <td>
+                            <span style="color:@(log.DeadlinesMissed > 0 ? "#FF5C6C" : "#00C9A7");font-weight:600;">
+                                @log.DeadlinesMissed
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:3px;">
+                                @for (int s = 1; s <= 5; s++)
+                                {
+                                    <i class="fa fa-star" style="font-size:11px;color:@(s <= log.PeerCollaborationScore ? "#FFB547" : "#E9EDF7");"></i>
+                                }
+                            </div>
+                        </td>
+                        <td style="color:var(--muted);font-size:12px;">@log.RecordedAt.ToString("dd MMM")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,200 @@
+@model List<Employee>
+@{
+    ViewData["Title"] = "Employees";
+    var predictions = ViewBag.Predictions as List<TeamPerformancePredictor.Models.PredictionResult>;
+}
+
+<!-- Header Row -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+    <div>
+        <div style="font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">
+            <i class="fa fa-users me-1"></i> Team Roster
+        </div>
+        <div style="font-size:14px; color:var(--muted);">@Model.Count active employees across all teams</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <a href="/Employee/Create" class="btn-tpp-primary">
+            <i class="fa fa-user-plus me-2"></i>Add Employee
+        </a>
+        <a href="/ActivityLog/Create" class="btn-tpp-outline">
+            <i class="fa fa-plus me-1"></i> Log Activity
+        </a>
+    </div>
+</div>
+
+<!-- Search + Filter Bar -->
+<div class="chart-card mb-4" style="padding:16px 20px;">
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px; position:relative;">
+            <i class="fa fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;"></i>
+            <input type="text" id="searchInput" placeholder="Search by name, email or team..."
+                   class="tpp-form-control" style="padding-left:36px;" />
+        </div>
+        <select id="riskFilter" class="tpp-form-control" style="width:180px;">
+            <option value="">All Risk Levels</option>
+            <option value="High">🔴 High Risk</option>
+            <option value="Medium">🟡 Medium Risk</option>
+            <option value="Low">🟢 Low Risk</option>
+        </select>
+        <select id="teamFilter" class="tpp-form-control" style="width:180px;">
+            <option value="">All Teams</option>
+            @foreach (var team in Model.Select(e => e.Team?.TeamName).Distinct().Where(t => t != null))
+            {
+                <option value="@team">@team</option>
+            }
+        </select>
+        <div style="font-size:13px; color:var(--muted); white-space:nowrap;">
+            Showing <span id="visibleCount">@Model.Count</span> of @Model.Count
+        </div>
+    </div>
+</div>
+
+<!-- Employee Cards Grid -->
+<div id="employeeGrid" class="row g-3">
+    @if (predictions != null)
+    {
+        for (int i = 0; i < Model.Count; i++)
+        {
+            var emp  = Model[i];
+            var pred = predictions[i];
+            var riskClass = pred.BurnoutRiskLevel switch {
+                "High"   => "risk-high",
+                "Medium" => "risk-medium",
+                _        => "risk-low"
+            };
+            var scoreColor = pred.ProductivityScore >= 70 ? "#00C9A7" :
+                             pred.ProductivityScore >= 45 ? "#0055FF" : "#FF5C6C";
+            var avatarColors = new[] {
+                "linear-gradient(135deg,#00C9A7,#0055FF)",
+                "linear-gradient(135deg,#8B5CF6,#EC4899)",
+                "linear-gradient(135deg,#F59E0B,#EF4444)",
+                "linear-gradient(135deg,#06B6D4,#3B82F6)",
+                "linear-gradient(135deg,#10B981,#059669)",
+                "linear-gradient(135deg,#F97316,#EF4444)",
+                "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                "linear-gradient(135deg,#14B8A6,#0EA5E9)"
+            };
+            var gradient = avatarColors[i % avatarColors.Length];
+
+            <div class="col-xl-3 col-lg-4 col-md-6 emp-card-wrap"
+                 data-name="@emp.Name.ToLower()"
+                 data-email="@emp.Email.ToLower()"
+                 data-team="@emp.Team?.TeamName"
+                 data-risk="@pred.BurnoutRiskLevel">
+                <div class="stat-card" style="padding:0; overflow:hidden;">
+
+                    <!-- Card Top Band -->
+                    <div style="height:6px; background:@scoreColor;"></div>
+
+                    <div style="padding:20px 20px 16px;">
+                        <!-- Avatar + Name -->
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+                            <div style="width:44px;height:44px;border-radius:12px;background:@gradient;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;">
+                                @emp.Name[0]
+                            </div>
+                            <div style="overflow:hidden;">
+                                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@emp.Name</div>
+                                <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@emp.Designation</div>
+                            </div>
+                        </div>
+
+                        <!-- Team + Dept -->
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+                            <span style="font-size:11px;background:#F4F7FE;padding:3px 9px;border-radius:6px;color:var(--muted);font-weight:600;">
+                                <i class="fa fa-users me-1"></i>@emp.Team?.TeamName
+                            </span>
+                            <span style="font-size:11px;background:#F4F7FE;padding:3px 9px;border-radius:6px;color:var(--muted);font-weight:600;">
+                                @emp.Department
+                            </span>
+                        </div>
+
+                        <!-- Productivity Score -->
+                        <div style="margin-bottom:12px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                                <span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);">Productivity</span>
+                                <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:@scoreColor;">@pred.ProductivityScore / 100</span>
+                            </div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width:@pred.ProductivityScore%;background:@scoreColor;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Burnout + Prob -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                            <span class="risk-badge @riskClass">
+                                @pred.BurnoutRiskLevel Risk
+                            </span>
+                            <span style="font-size:12px;color:var(--muted);">
+                                Burnout prob: <strong style="color:var(--text);">@Math.Round(pred.BurnoutProbability * 100, 0)%</strong>
+                            </span>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <!-- Action Buttons -->
+                        <div style="display:flex;gap:8px;">
+                            <a href="/Employee/Details/@emp.Id"
+                                   style="flex:1;text-align:center;padding:8px;border-radius:8px;background:linear-gradient(135deg,#00C9A7,#0055FF);color:#fff;font-size:12px;font-weight:700;text-decoration:none;font-family:'Syne',sans-serif;">
+                                View Details
+                            </a>
+                            <a href="/ActivityLog/Create?employeeId=@emp.Id"
+                                   style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);color:var(--muted);font-size:12px;text-decoration:none;transition:all .2s;"
+                                   title="Log Activity">
+                                <i class="fa fa-plus"></i>
+                            </a>
+                            <a href="/Employee/Edit/@emp.Id"
+                                   style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);color:var(--muted);font-size:12px;text-decoration:none;"
+                                   title="Edit">
+                                <i class="fa fa-pen"></i>
+                            </a>
+                            <form method="post" action="/Employee/Delete/@emp.Id" style="margin:0;"
+                                  onsubmit="return confirm('Delete @emp.Name? This cannot be undone.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        style="padding:8px 12px;border-radius:8px;border:1.5px solid #FF5C6C;background:transparent;color:#FF5C6C;font-size:12px;cursor:pointer;"
+                                        title="Delete">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+<script>
+    const searchInput  = document.getElementById('searchInput');
+    const riskFilter   = document.getElementById('riskFilter');
+    const teamFilter   = document.getElementById('teamFilter');
+    const cards        = document.querySelectorAll('.emp-card-wrap');
+    const visibleCount = document.getElementById('visibleCount');
+
+    function filterCards() {
+        const search = searchInput.value.toLowerCase();
+        const risk   = riskFilter.value;
+        const team   = teamFilter.value;
+        let visible  = 0;
+
+        cards.forEach(card => {
+            const matchSearch = !search ||
+                card.dataset.name.includes(search) ||
+                card.dataset.email.includes(search) ||
+                (card.dataset.team || '').toLowerCase().includes(search);
+            const matchRisk = !risk || card.dataset.risk === risk;
+            const matchTeam = !team || card.dataset.team === team;
+
+            const show = matchSearch && matchRisk && matchTeam;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        visibleCount.textContent = visible;
+    }
+
+    searchInput.addEventListener('input', filterCards);
+    riskFilter.addEventListener('change', filterCards);
+    teamFilter.addEventListener('change', filterCards);
+</script>
+}

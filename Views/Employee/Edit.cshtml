@@ -1,0 +1,85 @@
+@model Employee
+@{
+    ViewData["Title"] = "Edit — " + Model.Name;
+}
+
+<div style="max-width:680px;">
+    <div style="margin-bottom:20px;">
+        <a href="/Employee/Details/@Model.Id" style="font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;">
+            <i class="fa fa-arrow-left me-1"></i> Back to Profile
+        </a>
+    </div>
+
+    <div class="chart-card">
+        <div style="margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#00C9A7,#0055FF);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#fff;">
+                    @Model.Name[0]
+                </div>
+                <div>
+                    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text);">Edit Employee</div>
+                    <div style="font-size:13px;color:var(--muted);">@Model.Name</div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Full Name *</label>
+                    <input asp-for="Name" class="tpp-form-control" required />
+                    <span asp-validation-for="Name" style="font-size:12px;color:var(--danger);"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Work Email *</label>
+                    <input asp-for="Email" type="email" class="tpp-form-control" required />
+                    <span asp-validation-for="Email" style="font-size:12px;color:var(--danger);"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Designation *</label>
+                    <input asp-for="Designation" class="tpp-form-control" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Department *</label>
+                    <select asp-for="Department" class="tpp-form-control" required>
+                        <option>Technology</option>
+                        <option>Business</option>
+                        <option>Strategy</option>
+                        <option>Operations</option>
+                        <option>Finance</option>
+                        <option>HR</option>
+                        <option>Marketing</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Team *</label>
+                    <select asp-for="TeamId" asp-items="ViewBag.Teams" class="tpp-form-control" required>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="tpp-form-label">Join Date</label>
+                    <input asp-for="JoinDate" type="date" class="tpp-form-control" />
+                </div>
+                <div class="col-12">
+                    <label class="tpp-form-label">Status</label>
+                    <div style="display:flex;gap:16px;margin-top:4px;">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+                            <input asp-for="IsActive" type="checkbox" style="width:16px;height:16px;" /> Active Employee
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border);margin:24px 0;"></div>
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn-tpp-primary">
+                    <i class="fa fa-save me-2"></i> Save Changes
+                </button>
+                <a href="/Employee/Details/@Model.Id" class="btn-tpp-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
